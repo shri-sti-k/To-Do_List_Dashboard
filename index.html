@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #fff;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2.5rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input, select {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    button {
+      background: #2575fc;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #6a11cb;
+    }
+
+    .task-list {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .task {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 15px;
+      border-radius: 12px;
+      transition: transform 0.2s;
+    }
+
+    .task:hover {
+      transform: scale(1.02);
+    }
+
+    .task span {
+      flex: 1;
+      font-size: 1.1rem;
+    }
+
+    .priority-high { color: #ff4d4d; font-weight: bold; }
+    .priority-medium { color: #ffcc00; font-weight: bold; }
+    .priority-low { color: #66ff99; font-weight: bold; }
+
+    .task button {
+      margin-left: 8px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+    }
+
+    .progress-container {
+      margin-top: 25px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .progress-bar {
+      height: 20px;
+      background: #444;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress {
+      height: 100%;
+      background: #00ff99;
+      width: 0%;
+      text-align: center;
+      color: #000;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .dark-mode {
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: #eee;
+    }
+
+    .dark-mode .container {
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .dark-toggle {
+      margin: 15px auto;
+      display: block;
+      padding: 10px 20px;
+      background: #111;
+      color: #fff;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✨ To-Do List Dashboard</h1>
+    
+    <div class="controls">
+      <input type="text" id="taskInput" placeholder="Enter a task">
+      <input type="date" id="deadlineInput">
+      <select id="priorityInput">
+        <option value="High">High Priority</option>
+        <option value="Medium">Medium Priority</option>
+        <option value="Low">Low Priority</option>
+      </select>
+      <button onclick="addTask()">Add Task</button>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search tasks..." onkeyup="searchTask()">
+      <select id="filterPriority" onchange="filterTasks()">
+        <option value="All">All</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+    </div>
+
+    <div class="task-list" id="taskList"></div>
+
+    <div class="progress-container">
+      <p>Progress</p>
+      <div class="progress-bar">
+        <div class="progress" id="progressBar">0%</div>
+      </div>
+    </div>
+
+    <button class="dark-toggle" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+  </div>
+
+  <script>
+    let tasks = [];
+
+    function addTask() {
+      let taskInput = document.getElementById("taskInput").value.trim();
+      let deadline = document.getElementById("deadlineInput").value;
+      let priority = document.getElementById("priorityInput").value;
+
+      if (taskInput === "") return alert("Please enter a task!");
+
+      let task = {
+        text: taskInput,
+        deadline: deadline,
+        priority: priority,
+        completed: false
+      };
+
+      tasks.push(task);
+      document.getElementById("taskInput").value = "";
+      renderTasks();
+    }
+
+    function renderTasks() {
+      let list = document.getElementById("taskList");
+      list.innerHTML = "";
+
+      tasks.forEach((task, index) => {
+        let div = document.createElement("div");
+        div.className = "task";
+
+        div.innerHTML = `
+          <span class="priority-${task.priority.toLowerCase()}">${task.text} 
+          <small>[${task.deadline || "No deadline"}]</small></span>
+          <button onclick="toggleComplete(${index})">${task.completed ? "Undo" : "Done"}</button>
+          <button onclick="editTask(${index})">Edit</button>
+          <button onclick="deleteTask(${index})">Delete</button>
+        `;
+        list.appendChild(div);
+      });
+      updateProgress();
+    }
+
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      renderTasks();
+    }
+
+    function editTask(index) {
+      let newTask = prompt("Edit Task:", tasks[index].text);
+      if (newTask) tasks[index].text = newTask;
+      renderTasks();
+    }
+
+    function toggleComplete(index) {
+      tasks[index].completed = !tasks[index].completed;
+      renderTasks();
+    }
+
+    function searchTask() {
+      let searchValue = document.getElementById("searchInput").value.toLowerCase();
+      let filtered = tasks.filter(task => task.text.toLowerCase().includes(searchValue));
+      displayFiltered(filtered);
+    }
+
+    function filterTasks() {
+      let priority = document.getElementById("filterPriority").value;
+      let filtered = tasks.filter(task => priority === "All" || task.priority === priority);
+      displayFiltered(filtered);
+    }
+
+    function displayFiltered(filtered) {
+      let list = document.getElementById("taskList");
+      list.innerHTML = "";
+      filtered.forEach((task, index) => {
+        let div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `
+          <span class="priority-${task.priority.toLowerCase()}">${task.text} 
+          <small>[${task.deadline || "No deadline"}]</small></span>
+          <button onclick="toggleComplete(${index})">${task.completed ? "Undo" : "Done"}</button>
+          <button onclick="editTask(${index})">Edit</button>
+          <button onclick="deleteTask(${index})">Delete</button>
+        `;
+        list.appendChild(div);
+      });
+      updateProgress();
+    }
+
+    function updateProgress() {
+      let completed = tasks.filter(task => task.completed).length;
+      let total = tasks.length;
+      let progress = total ? Math.round((completed / total) * 100) : 0;
+      let bar = document.getElementById("progressBar");
+      bar.style.width = progress + "%";
+      bar.innerText = progress + "%";
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+  </script>
+</body>
+</html>
